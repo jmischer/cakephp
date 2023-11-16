@@ -196,11 +196,15 @@ class MessagesFileLoader
         
         if (is_callable($searchPathOrder)) {
             return call_user_func(
-                $searchPathOrder, 
-                $this->plugin, 
-                $this->name, 
-                $this->locale, 
-                $this->_extension);
+                $searchPathOrder,
+                $appSearchPaths,
+                $pluginSearchPathes,
+                [
+                    'plugin' => $this->_plugin, 
+                    'name' => $this->_name, 
+                    'locale' => $this->_locale, 
+                    'extension' => $this->_extension
+                ]);
         }
         
         if ($searchPathOrder === 'pluginFirst') {

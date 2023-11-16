@@ -106,6 +106,17 @@ class MessagesFileLoaderTest extends TestCase
         ];
         $result = $loader->translationsFolders();
         $this->assertEquals($expected_plugin_first, $result);
+        
+        Configure::write('App.MessagesFileLoader.searchPathOrder', function ($appSearchPathes, $pluginSearchPathes) {
+            return $pluginSearchPathes;
+        });
+        
+        $expected_custom = [
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'Plugin' . DS . 'TestPluginFour' . DS . 'resources' . DS . 'locales' . DS . 'en_' . DS,
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'Plugin' . DS . 'TestPluginFour' . DS . 'resources' . DS . 'locales' . DS . 'en' . DS
+        ];
+        $result = $loader->translationsFolders();
+        $this->assertEquals($expected_custom, $result);
     }
 
     /**
