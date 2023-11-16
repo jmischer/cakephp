@@ -22,6 +22,7 @@ use Cake\Utility\Inflector;
 use Locale;
 use RuntimeException;
 use function Cake\Core\pluginSplit;
+use Cake\Core\Configure;
 
 /**
  * A generic translations package factory that will load translations files
@@ -172,25 +173,42 @@ class MessagesFileLoader
             $locale['language'],
         ];
 
-        $searchPaths = [];
-
+        $pluginSearchPathes = [];
         if ($this->_plugin && Plugin::isLoaded($this->_plugin)) {
             $basePath = App::path('locales', $this->_plugin)[0];
             foreach ($folders as $folder) {
-                $searchPaths[] = $basePath . $folder . DIRECTORY_SEPARATOR;
+                $pluginSearchPathes[] = $basePath . $folder . DIRECTORY_SEPARATOR;
             }
         }
 
+        $appSearchPaths = [];
         $localePaths = App::path('locales');
         if (empty($localePaths) && defined('APP')) {
             $localePaths[] = ROOT . 'resources' . DIRECTORY_SEPARATOR . 'locales' . DIRECTORY_SEPARATOR;
         }
         foreach ($localePaths as $path) {
             foreach ($folders as $folder) {
-                $searchPaths[] = $path . $folder . DIRECTORY_SEPARATOR;
+                $appSearchPaths[] = $path . $folder . DIRECTORY_SEPARATOR;
             }
         }
 
+        $searchPathOrder = Configure::read('App.MessagesFileLoader.searchPathOrder');
+        
+        if (is_callable($searchPathOrder)) {
+            return call_user_func(
+                $searchPathOrder, 
+                $this->plugin, 
+                $this->name, 
+                $this->locale, 
+                $this->_extension);
+        }
+        
+        if ($searchPathOrder === 'pluginFirst') {
+            $searchPaths = array_merge($pluginSearchPathes, $appSearchPaths);
+        } else {
+            $searchPaths = array_merge($appSearchPaths, $pluginSearchPathes);
+        }
+        
         return $searchPaths;
     }
 }

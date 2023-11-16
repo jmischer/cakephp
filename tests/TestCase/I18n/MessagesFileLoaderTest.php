@@ -78,4 +78,53 @@ class MessagesFileLoaderTest extends TestCase
         $package = $loader();
         $this->assertFalse($package);
     }
+    
+    /**
+     * Testing MessagesFileLoader::translationsFilder array sequence
+     */
+    public function testTranslationFoldersSequence(): void
+    {
+        $this->loadPlugins(['TestPluginFour']);
+        $loader = new MessagesFileLoader('test_plugin_four', 'en');
+
+        $expected_default = [
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'resources' . DS . 'locales' . DS . 'en_' . DS,
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'resources' . DS . 'locales' . DS . 'en' . DS,
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'Plugin' . DS . 'TestPluginFour' . DS . 'resources' . DS . 'locales' . DS . 'en_' . DS,
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'Plugin' . DS . 'TestPluginFour' . DS . 'resources' . DS . 'locales' . DS . 'en' . DS,
+        ];
+        $result = $loader->translationsFolders();
+        $this->assertEquals($expected_default, $result);
+
+        Configure::write('App.MessagesFileLoader.searchPathOrder', 'pluginFirst');
+
+        $expected_plugin_first = [
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'Plugin' . DS . 'TestPluginFour' . DS . 'resources' . DS . 'locales' . DS . 'en_' . DS,
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'Plugin' . DS . 'TestPluginFour' . DS . 'resources' . DS . 'locales' . DS . 'en' . DS,
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'resources' . DS . 'locales' . DS . 'en_' . DS,
+            ROOT . DS . 'tests' . DS . 'test_app' . DS . 'resources' . DS . 'locales' . DS . 'en' . DS,
+        ];
+        $result = $loader->translationsFolders();
+        $this->assertEquals($expected_plugin_first, $result);
+    }
+
+    /**
+     * Testing plugin override from app
+     */
+    public function testPluginOverrides(): void
+    {
+        $this->loadPlugins(['TestPluginFour']);
+
+        $loader = new MessagesFileLoader('test_plugin_four', 'en');
+        $package  = $loader();
+        $messages = $package->getMessages();
+        $this->assertSame('Test message (from test app)', $messages['Test message']['_context']['']);
+
+        Configure::write('App.MessagesFileLoader.searchPathOrder', 'pluginFirst');
+
+        $loader = new MessagesFileLoader('test_plugin_four', 'en');
+        $package  = $loader();
+        $messages = $package->getMessages();
+        $this->assertSame('Test message (from plugin four)', $messages['Test message']['_context']['']);
+    }
 }
